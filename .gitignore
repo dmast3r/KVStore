@@ -1,0 +1,18 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+.glide/
+bin/
+pkg/
+.vscode/
+*.swp
+*.swo
+.idea/
+.DS_Store
+*.pid
+*.pid.lock
