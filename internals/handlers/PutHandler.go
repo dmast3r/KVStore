@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"KVStore/internals/utils"
 	"encoding/json"
 	"log"
 	"math"
 	"net/http"
 	"time"
-	"KVStore/internals/utils"
 )
 
 type Payload struct {
@@ -51,6 +51,19 @@ func PutHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error executing the statement", http.StatusInternalServerError)
 		log.Printf("Error executing the statement: %v", err)
 		return
+	}
+
+	var cacheTTL time.Duration
+	if p.TTL != nil {
+		cacheTTL = time.Until(time.Unix(*p.TTL, 0))
+		if cacheTTL < 0 {
+			cacheTTL = 0
+		}
+	}
+
+	err = utils.GetRedisClient().Set(r.Context(), p.Key, p.Value, cacheTTL).Err()
+	if err != nil {
+		log.Printf("Error caching the key-value pair in Redis: %v", err)
 	}
 
 	w.WriteHeader(http.StatusOK)

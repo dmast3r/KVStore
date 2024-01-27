@@ -20,11 +20,18 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err := utils.GetRedisClient().Del(r.Context(), key).Err()
+	if err != nil {
+		log.Printf("Error deleting key from cache: %v", err)
+		http.Error(w, "Error deleting key from cache", http.StatusInternalServerError)
+		return
+	}
+
 	db := utils.GetShardDB(key)
 
 	var ttl int64
-	err := db.QueryRow("SELECT ttl FROM KVStore WHERE `key` = ? AND ttl > ?", key, time.Now().Unix()).Scan(&ttl)
-	
+	err = db.QueryRow("SELECT ttl FROM KVStore WHERE `key` = ? AND ttl > ?", key, time.Now().Unix()).Scan(&ttl)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNoContent)

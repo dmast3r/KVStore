@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"KVStore/internals/utils"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
-	"KVStore/internals/utils"
 )
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,6 +14,13 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	if key == "" {
 		http.Error(w, "Key is required", http.StatusBadRequest)
+		return
+	}
+
+	val, err := utils.GetRedisClient().Get(r.Context(), key).Result()
+
+	if err == nil {
+		fmt.Fprintf(w, "Value: %s", val)
 		return
 	}
 
@@ -28,7 +35,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	var value string
 	var ttl int64
 	err = stmt.QueryRow(key, time.Now().Unix()).Scan(&value, &ttl)
-	
+
 	if err == sql.ErrNoRows {
 		http.Error(w, "Key not found or TTL expired", http.StatusNotFound)
 		return
